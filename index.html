@@ -1,0 +1,362 @@
+<html>
+<script src="/socket.io/socket.io.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+<title>Whiteboard</title>
+<head style="z-index:5;">
+<style>
+
+
+#messages { list-style-type: none; margin: 0; padding: 0; }
+#messages li:nth-child(odd) { background: #eee; }
+</style>
+<div style="z-index:10">
+
+</div>
+<h1>Whiteboard</h1>
+<link href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/3AP//9wD///cA///3AP//9wD///cA///3AP//9wD///cA///3AP//9wD///cA/wAAAAAAAAAAAAAAAP/3AP//9wD///cA///3AP//9wD///cA///3AP//9wD///cA///3AP//9wD///cA///3AP//9wD/AAAAAP/3AP//9wD///cA///3AP8N/wD/Df8A/w3/AP8N/wD/Df8A/w3/AP8N/wD/Df8A///3AP//9wD///cA///3AP//9wD///cA///3AP8N/wD/Df8A/w3/AP8N/wD/Df8A/w3/AP8N/wD/Df8A/w3/AP8N/wD///cA///3AP//9wD///cA///3AP8N/wD/Df8A/w3/AP/mAP/+5gD//uYA//7mAP/+5gD//uYA//4N/wD/Df8A/w3/AP//9wD///cA///3AP//9wD/Df8A/w3/AP/mAP/+5gD//v8IAP7/CAD+/wgA/v8IAP7mAP/+5gD//g3/AP8N/wD///cA///3AP//9wD///cA/w3/AP8N/wD/5gD//v8IAP7/CAD+AAAA/wAAAP//CAD+/wgA/uYA//4N/wD/Df8A///3AP//9wD///cA///3AP8N/wD/Df8A/+YA//7/CAD+AAAA/w0N//8NDf//AAAA//8IAP7mAP/+Df8A/w3/AP//9wD///cA///3AP//9wD/Df8A/w3/AP/mAP/+/wgA/gAAAP8NDf//DQ3//wAAAP//CAD+5gD//g3/AP8N/wD///cA///3AP//9wD///cA/w3/AP8N/wD/5gD//v8IAP7/CAD+AAAA/wAAAP//CAD+/wgA/uYA//4N/wD/Df8A///3AP//9wD///cA///3AP8N/wD/Df8A/+YA//7mAP/+/wgA/v8IAP7/CAD+/wgA/uYA//7mAP/+Df8A/w3/AP//9wD///cA///3AP//9wD/Df8A/w3/AP8N/wD/5gD//uYA//7mAP/+5gD//uYA//7mAP/+Df8A/w3/AP8N/wD///cA///3AP//9wD///cA///3AP8N/wD/Df8A/w3/AP8N/wD/Df8A/w3/AP8N/wD/Df8A/w3/AP8N/wD///cA///3AP//9wD///cA///3AP//9wD///cA/w3/AP8N/wD/Df8A/w3/AP8N/wD/Df8A/w3/AP8N/wD///cA///3AP//9wD///cA/wAAAAD/9wD///cA///3AP//9wD///cA///3AP//9wD///cA///3AP//9wD///cA///3AP//9wD///cA/wAAAAAAAAAAAAAAAP/3AP//9wD///cA///3AP//9wD///cA///3AP//9wD///cA///3AP//9wD///cA/wAAAAAAAAAAwAMAAIABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAAwAMAAA==" rel="icon" type="image/x-icon" /></head>
+<script type="text/javascript">
+var canvas, ctx, flag = false,
+    prevX = 0,
+    currX = 0,
+    prevY = 0,
+    currY = 0,
+    dot_flag = false;
+var chatmove=false;
+var initx=0,
+inity=0;
+var x = "black",
+    y = 2;
+var socket;
+function init() {
+    $( "#title" ).mousedown(function( event ) {
+initx=$("#windowaz").offset().left-event.clientX;
+inity=$("#windowaz").offset().top-event.clientY;
+chatmove=true;
+$("#windowaz").fadeTo(0,.9);
+
+});
+$( "#title" ).mousemove(function( event ) {
+
+if(chatmove==true){
+
+$("#windowaz").offset({top:(event.clientY+inity),left:(event.clientX+initx)});
+
+
+}
+});
+$( "#title" ).mouseup(function( event ) {
+$("#windowaz").offset({top:(event.clientY+inity),left:(event.clientX+initx)});
+chatmove=false;
+$("#windowaz").fadeTo(0,1);
+
+});
+window.onmousemove = function(event){
+if(chatmove==true){
+
+$("#windowaz").offset({top:(event.clientY+inity),left:(event.clientX+initx)});
+
+
+}
+
+};
+    socket=io();
+$('form').submit(function(){
+socket.emit('chat message', $('#m').val());
+$('#m').val('');
+return false;
+});
+socket.on('chat message', function(msg){
+$('#messages').append($('<li>').text(msg));
+
+ var objDiv=document.getElementById('div_mes');
+objDiv.scrollTop = objDiv.scrollHeight;
+});
+    canvas = document.getElementById('can');
+    ctx = canvas.getContext("2d");
+    w = canvas.width;
+    h = canvas.height;
+    socket.on('init',function(data){
+var img12=new Image;
+
+
+
+img12.onload = function(){
+  ctx.drawImage(img12,0,0); // Or at whatever offset you like
+};
+img12.src=data;
+});
+	canvas.addEventListener("touchstart", function (e) {
+	socket.emit('log','Touch started');
+        findxy('tdown', e);
+	 event.preventDefault();
+    }, false);
+    canvas.addEventListener("touchcancel", function (e) {
+	socket.emit('log','Touch canceled');
+        findxy('out', e);
+	 event.preventDefault();
+    }, false);
+    canvas.addEventListener("touchleave", function (e) {
+	socket.emit('log','Touch left');
+        findxy('out', e);
+	 event.preventDefault();
+    }, false);
+
+	    canvas.addEventListener("touchmove", function (e) {
+	socket.emit('log','Touch moved');
+        findxy('tmove', e);
+	 event.preventDefault();
+    }, false);
+    canvas.addEventListener("touchend", function (e) {
+	socket.emit('log','Touch ended');
+        findxy('up', e);
+	 event.preventDefault();
+    }, false);
+    canvas.addEventListener("mousemove", function (e) {
+        findxy('move', e);
+    }, false);
+    canvas.addEventListener("mousedown", function (e) {
+        findxy('down', e);
+    }, false);
+    canvas.addEventListener("mouseup", function (e) {
+        findxy('up', e);
+    }, false);
+    canvas.addEventListener("mouseout", function (e) {
+        findxy('out', e);
+    }, false);
+    socket.on('erase',function(){
+    erase();
+
+    });
+    socket.on('draw',function(arr){
+    y=gety();
+    var prevX1=prevX;
+    var prevY1=prevY
+    var currX1=currX;
+    var currY1=currY;
+    var x1=x;
+    var y1=y;
+    prevX=arr[0];
+    prevY=arr[1];
+    currX=arr[2];
+    currY=arr[3];
+    x=arr[5];
+    y=arr[6];
+    if(arr[4]==0){
+    draw();
+    }
+    if(arr[4]==1){
+	ctx.beginPath();
+	ctx.fillStyle = x;
+	ctx.fillRect(currX, currY, 2, 2);
+    ctx.closePath();
+    }
+    prevX=prevX1;
+	    prevY=prevY1;
+	    currX=currX1;
+    currY=currY1;
+    x=x1;
+    y=y1;
+    });
+}
+
+function color(obj) {
+    switch (obj.id) {
+        case "green":
+            x = "green";
+            break;
+        case "blue":
+            x = "blue";
+            break;
+        case "red":
+            x = "red";
+            break;
+        case "yellow":
+            x = "yellow";
+            break;
+        case "orange":
+            x = "orange";
+            break;
+        case "black":
+            x = "black";
+            break;
+        case "white":
+            x = "rgba(255,255,255,1)";
+            break;
+    }
+    if (x == "white") y = 14;
+    else y = 2;
+    y=gety();
+
+}
+function gety(){
+var tt=document.getElementById("slider").value;
+return tt;
+
+}
+function draw() {
+    ctx.beginPath();
+    ctx.moveTo(prevX, prevY);
+
+    ctx.lineTo(currX, currY);
+    ctx.strokeStyle = x;
+    ctx.lineWidth = y;
+    ctx.stroke();
+    ctx.closePath();
+}
+
+function erase() {
+    
+        ctx.clearRect(0, 0, w, h);
+        document.getElementById("canvasimg").style.display = "none";
+    
+}
+function sigerase(){
+var m = confirm("Want to clear");
+    if (m) {
+socket.emit('erase');
+}
+
+}
+
+function save() {
+    document.getElementById("canvasimg").style.border = "2px solid";
+    var dataURL = canvas.toDataURL();
+    document.getElementById("canvasimg").src = dataURL;
+    document.getElementById("canvasimg").style.display = "inline";
+}
+
+function load(){
+socket.emit('load',document.getElementById("load").value);
+}
+
+function findxy(res, e) {
+ if(res=='tdown'&&e.touches) {
+            if (e.touches.length == 1) { // Only deal with one finger
+                var touch = e.touches[0]; // Get the information for finger #1
+		prevX=currX;
+		prevY=currY;
+                currX=canvas.width*(touch.pageX - canvas.offsetLeft)/canvas.scrollWidth;
+                currY=canvas.height*(touch.pageY- canvas.offsetTop)/canvas.scrollHeight;
+		flag = true;
+        	dot_flag = true;
+
+        	if (dot_flag) {
+        	var arr=[prevX,prevY,currX,currY,1,x,y];
+        	socket.emit('draw', arr);
+
+            	dot_flag = false;
+        	}
+            }
+  }
+  if(res=='tmove'&&e.touches) {
+            if (e.touches.length == 1&&flag) { // Only deal with one finger
+                var touch = e.touches[0]; // Get the information for finger #1
+		prevX=currX;
+		prevY=currY;
+                currX=canvas.width*(touch.pageX - canvas.offsetLeft)/canvas.scrollWidth;
+                currY=canvas.height*(touch.pageY- canvas.offsetTop)/canvas.scrollHeight;
+		var arr=[prevX,prevY,currX,currY,0,x,y];
+        	socket.emit('draw', arr);
+            }
+        }
+    if (res == 'down') {
+        prevX = currX;
+        prevY = currY;
+        currX = canvas.width*(e.clientX - canvas.offsetLeft)/canvas.scrollWidth;
+        currY = canvas.height*(e.clientY - canvas.offsetTop)/canvas.scrollHeight;
+
+        flag = true;
+        dot_flag = true;
+
+        if (dot_flag) {
+        var arr=[prevX,prevY,currX,currY,1,x,y];
+        socket.emit('draw', arr);
+
+            dot_flag = false;
+        }
+    }
+    if (res == 'up' || res == "out") {
+        flag = false;
+    }
+    if (res == 'move') {
+        if (flag) {
+            prevX = currX;
+            prevY = currY;
+            currX = canvas.width*(e.clientX - canvas.offsetLeft)/canvas.scrollWidth;
+            currY = canvas.height*(e.clientY - canvas.offsetTop)/canvas.scrollHeight;
+
+
+			var arr=[prevX,prevY,currX,currY,0,x,y];
+        	socket.emit('draw', arr);
+
+
+        }
+    }
+}
+</script>
+<body onload="init()" style="z-index:1;">
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- Leatherboard -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:728px;height:90px ;g
+ 
+"
+     data-ad-client="ca-pub-5966628690971273"
+     data-ad-slot="7997598742"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+<div id="windowaz" style="position:absolute;top:85%;left:22.5%;width:30%;height:15%;background:orange;z-index:1;">
+    <div id="title" style="position:absolute;top:0%;right:0%;width:100%;height:30%;background:DarkGray;z-index:2;border:2px solid;font-size:x-large;">
+Chat
+</div>
+<div id="chatbody" style="position:absolute;top:30%;right:0%;width:100%;height:70%;background:White;z-index:2;border:2px solid;">
+<div style="position:absolute;top:0%;left:0%;width:100%;height:70%;overflow-y:scroll;" id = "div_mes">
+<ul id="messages" ></ul>
+</div>
+<form action="">
+<input id="m" autocomplete="off" style="position:absolute;bottom:0%;left:0%;width:80%;height:30%;" />
+<button style="position:absolute;bottom:0%;right:0%;height:30%;width:20%;background:#ffffff url();">Send</button>
+</form>
+</div>
+    </div>
+    <canvas id="can" width="1920" height="1080" style="width:85%;height:85%;position:absolute;bottom:15%;left:0%;right:15%;border:2px solid;"></canvas>
+
+
+<div style="width:15%;height:85%;position:absolute;bottom:15%;left:85%;right:0%;border:2px solid;">
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- neww -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:300px;height:600px"
+     data-ad-client="ca-pub-5966628690971273"
+     data-ad-slot="5587359145"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+</div>
+
+<div style="position:absolute;top:85%;left:0%;width:100%;height:15%;z-index:-1;" id="sidebar">
+    <div style="position:absolute;top:0%;right:0%;width:7.5%;height:50%;background:green;" id="green" onclick="color(this)"></div>
+    <div style="position:absolute;top:0%;right:7.5%;width:7.5%;height:50%;background:blue;" id="blue" onclick="color(this)"></div>
+    <div style="position:absolute;top:0%;right:15%;width:7.5%;height:50%;background:red;" id="red" onclick="color(this)"></div>
+    <div style="position:absolute;top:50%;right:0%;width:7.5%;height:50%;background:yellow;" id="yellow" onclick="color(this)"></div>
+    <div style="position:absolute;top:50%;right:7.5%;width:7.5%;height:50%;background:orange;" id="orange" onclick="color(this)"></div>
+    <div style="position:absolute;top:50%;right:15%;width:7.5%;height:50%;background:black;" id="black" onclick="color(this)"></div>
+
+    <div style="position:absolute;top:0%;right:22.5%;width:7.5%;height:100%;background:white;border:2px solid;" id="white" onclick="color(this)"></div>
+    <img id="canvasimg" style="position:absolute;top:10%;left:12%;" style="display:none;">
+    <input type="button" value="Save" id="btn" onclick="save()" style="position:absolute;top:50%;left:0%;width:10%;height:50%;background:#ffffff url();font-size:200%;padding:0px;">
+    <input type="button" value="Clear" id="clr" onclick="sigerase()" style="position:absolute;top:50%;left:10%;height:50%;width:10%;background:#ffffff url();font-size:200%;padding:0px;">    
+    <input type="button" value="Load" id="load" onclick="load()" style="position:absolute;top:50%;left:20%;height:50%;width:10%;background:#ffffff url();font-size:200%;padding:0px;">
+    
+    
+    
+    <!-- 
+    <select name="list" id="list" style="position:absolute;top:90%;left:25%;"></select> 
+    -->
+    <input id="slider" type ="range" min ="1" max="100" step ="1" value ="2" style="position:absolute;top:0%;left:0%;width:30%;height:50%;"/>
+    </div>
+</body>
+</html>

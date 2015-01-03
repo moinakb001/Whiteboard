@@ -1,0 +1,17 @@
+<html>
+<title>Current Board</title>
+<script src="/socket.io/socket.io.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+<script type="text/javascript">
+var socket = io();
+socket.on('init',function(data){
+document.getElementById("canvasimg").style.border = "2px solid";
+
+document.getElementById("canvasimg").src = data;
+document.getElementById("canvasimg").style.display = "inline";
+});
+
+
+</script>
+<img id="canvasimg">
+</html>
